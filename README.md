@@ -3,7 +3,7 @@
 A Windows desktop app to manage WSL distributions and run Linux desktops/apps through WSLg (Wayland/X11) — no terminal needed.
 
 ## Features
-- **Distros**: install from the official online list, set default, stop, export/import, delete, update WSL.
+- **Distros**: install from the Microsoft store list, any URL, or a local file (.tar/.wsl/.vhdx); one-click **Open GUI** auto-installs the chosen layer and shows the desktop. Also, set default, stop, export/import, delete, update WSL.
 - **UI layers**: install and launch XFCE, KDE Plasma, GNOME, LXQt, a nested Weston (Wayland) compositor, or plain WSLg app integration. The package manager (apt/dnf/pacman/zypper/apk) is auto-detected.
 - **Add your own layer**: import a `.json` file (or drop it in `%APPDATA%\WSL-GUI\layers`). See `wsl_gui/layers.py` and `wsl_gui/builtin_layers/*.json` for the format.
 - **Apps & Terminal**: launch any Linux GUI app, run a command with live output, open a terminal, browse files in Explorer.

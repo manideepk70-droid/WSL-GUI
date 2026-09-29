@@ -7,7 +7,7 @@ Fields:
   install: {"apt": "...", "dnf": "...", "pacman": "...", "zypper": "...", "apk": "..."}
   launch:  shell command run inside the distro (as the regular user)
   mode:    "nested" (desktop in one window, uses Xephyr/weston) or "apps" (windows integrate with Windows via WSLg)
-  requires: optional list of extra commands that must exist (e.g. ["Xephyr"])
+  check:   optional command name that exists once the layer is installed (enables auto-install)
 """
 
 from __future__ import annotations
@@ -34,6 +34,7 @@ class UILayer:
     description: str = ""
     mode: str = "apps"
     builtin: bool = False
+    check: str = ""
 
     def install_command(self, pm: str) -> str:
         try:
@@ -60,7 +61,7 @@ def layer_from_dict(data: dict, builtin: bool = False) -> UILayer:
     mode = data.get("mode", "apps")
     if mode not in MODES:
         raise LayerError(f"'mode' must be one of {MODES}")
-    return UILayer(lid, data["name"], data["launch"], install, data.get("description", ""), mode, builtin)
+    return UILayer(lid, data["name"], data["launch"], install, data.get("description", ""), mode, builtin, str(data.get("check", "")))
 
 
 def user_layers_dir() -> Path:

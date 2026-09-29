@@ -10,5 +10,6 @@
     "pacman": "pacman -Sy --noconfirm weston",
     "zypper": "zypper --non-interactive install weston",
     "apk": "apk add weston weston-terminal"
-  }
+  },
+  "check": "weston"
 }

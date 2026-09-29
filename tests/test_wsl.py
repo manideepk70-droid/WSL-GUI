@@ -80,3 +80,13 @@ def test_layer_validation_and_import(tmp_path):
     assert "sway" in {l.id for l in load_layers(user)}
     with pytest.raises(LayerError):
         layer_from_dict({"id": "sway", "name": "S", "launch": "s"}).install_command("apt")
+
+
+def test_install_from_file_variants(tmp_path):
+    calls = []
+    w = Wsl(lambda a, s: calls.append(list(a)) or CommandResult(0, ""))
+    w.install_from_file("x", str(tmp_path / "a"), "img.tar.gz")
+    w.install_from_file("y", str(tmp_path / "b"), "img.wsl")
+    assert calls[0][1] == "--import" and calls[1][1:3] == ["--install", "--from-file"]
+    with pytest.raises(WslError):
+        w.install_from_url("z", str(tmp_path), "ftp://nope")

@@ -132,9 +132,10 @@ class MainWindow(QMainWindow):
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         btns = QHBoxLayout()
         for label, fn in [
-            ("Install new…", self.on_install), ("Set default", self.on_set_default),
+            ("Install from store…", self.on_install), ("Install from URL…", self.on_install_url),
+            ("Install from file…", self.on_import), ("Open GUI ▶", self.on_open_gui), ("Set default", self.on_set_default),
             ("Stop", self.on_terminate), ("Export…", self.on_export),
-            ("Import…", self.on_import), ("Delete", self.on_unregister),
+            ("Delete", self.on_unregister),
             ("Update WSL", self.on_update), ("Refresh", self.refresh),
         ]:
             b = QPushButton(label)
@@ -191,13 +192,14 @@ class MainWindow(QMainWindow):
                 self.run_task(f"Exporting {name}", lambda log: self.wsl.export(name, path))
 
     def on_import(self):
-        tar, _ = QFileDialog.getOpenFileName(self, "Distro tarball", "", "Tar (*.tar *.tar.gz *.vhdx)")
+        tar, _ = QFileDialog.getOpenFileName(self, "Distro image", "", "Distro (*.tar *.tar.gz *.tar.xz *.wsl *.vhdx)")
         if not tar:
             return
         name, ok = QInputDialog.getText(self, "Import", "Name for the new distro:")
         dest = QFileDialog.getExistingDirectory(self, "Install location") if ok and name else ""
         if dest:
-            self.run_task(f"Importing {name}", lambda log: self.wsl.import_distro(name, dest, tar))
+            self.run_task(f"Installing {name} from file",
+                          lambda log: self.wsl.install_from_file(name, str(Path(dest) / name), tar))
 
     def on_unregister(self):
         name = self._need_selection()
@@ -206,6 +208,27 @@ class MainWindow(QMainWindow):
             f"Permanently delete '{name}' and ALL its files?",
         ) == QMessageBox.Yes:
             self.run_task(f"Deleting {name}", lambda log: self.wsl.unregister(name))
+
+    def on_install_url(self):
+        url, ok = QInputDialog.getText(self, "Install from URL", "URL of a rootfs .tar/.tar.gz/.wsl/.vhdx:")
+        if not ok or not url.strip():
+            return
+        name, ok = QInputDialog.getText(self, "Install from URL", "Name for the new distro:")
+        if not ok or not name.strip():
+            return
+        dest = QFileDialog.getExistingDirectory(self, "Install location")
+        if dest:
+            self.run_task(f"Installing {name} from URL",
+                          lambda log: self.wsl.install_from_url(name.strip(), str(Path(dest) / name.strip()), url.strip(), log))
+
+    def on_open_gui(self):
+        """One click: pick layer, auto-install it if needed, then show the distro's desktop."""
+        name = self._need_selection()
+        if not name:
+            return
+        self.desktop_distro.setCurrentText(name)
+        self.tabs.setCurrentIndex(1)
+        self.on_layer_launch(auto_install=True)
 
     def on_update(self):
         self.run_task("Updating WSL", lambda log: self.wsl.update())
@@ -222,7 +245,7 @@ class MainWindow(QMainWindow):
         add = QPushButton("Add custom layer (.json)…")
         folder = QPushButton("Open layers folder")
         install.clicked.connect(self.on_layer_install)
-        launch.clicked.connect(self.on_layer_launch)
+        launch.clicked.connect(lambda: self.on_layer_launch())
         add.clicked.connect(self.on_layer_add)
         folder.clicked.connect(self.on_layers_folder)
         row = QHBoxLayout()
@@ -258,9 +281,10 @@ class MainWindow(QMainWindow):
 
     def on_layer_install(self):
         distro, layer = self.target_distro(self.desktop_distro), self._layer()
-        if not distro or not layer:
-            return
+        if distro and layer:
+            self._install_layer(distro, layer)
 
+    def _install_layer(self, distro: str, layer: UILayer, then=None):
         def job(log):
             pm = self.wsl.detect_package_manager(distro)
             if not pm:
@@ -269,21 +293,32 @@ class MainWindow(QMainWindow):
             for line in self.wsl.stream(distro, layer.install_command(pm), user="root"):
                 log(line)
 
-        self.run_task(f"Installing {layer.name} in {distro}", job)
+        self.run_task(f"Installing {layer.name} in {distro}", job, then)
 
-    def on_layer_launch(self):
+    def on_layer_launch(self, auto_install: bool = False):
         distro, layer = self.target_distro(self.desktop_distro), self._layer()
         if not distro or not layer:
             return
-        if not self.wsl.wslg_available(distro):
-            QMessageBox.warning(
-                self, "WSLg not detected",
-                "WSLg (/mnt/wslg) is missing. Run 'wsl --update' on Windows 11 / recent Windows 10, "
-                "then restart WSL.",
-            )
+
+        def start(_ok=True):
+            if not _ok:
+                return
+            if not self.wsl.wslg_available(distro):
+                QMessageBox.warning(
+                    self, "WSLg not detected",
+                    "WSLg (/mnt/wslg) is missing. Run 'wsl --update' on Windows 11 / recent Windows 10, "
+                    "then restart WSL.")
+                return
+            self.log(f"Launching {layer.name} in {distro}")
+            self.wsl.spawn_gui(distro, layer.launch_command())
+
+        if layer.check and not self.wsl.has_command(distro, layer.check):
+            if auto_install or QMessageBox.question(
+                self, "Not installed", f"{layer.name} is not installed in {distro}. Install it now?"
+            ) == QMessageBox.Yes:
+                self._install_layer(distro, layer, then=start)
             return
-        self.log(f"Launching {layer.name} in {distro}")
-        self.wsl.spawn_gui(distro, layer.launch_command())
+        start()
 
     def on_layer_add(self):
         path, _ = QFileDialog.getOpenFileName(self, "Layer definition", "", "JSON (*.json)")

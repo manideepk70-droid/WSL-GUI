@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import os
 import re
+import urllib.request
 import shlex
 import subprocess
 from dataclasses import dataclass
@@ -186,3 +188,39 @@ class Wsl:
     @staticmethod
     def explorer_path(distro: str) -> str:
         return rf"\\wsl.localhost\{distro}"
+
+    # --- install from URL / file ------------------------------------------
+    def install_from_file(self, name: str, install_dir: str, path: str) -> None:
+        """Import a rootfs tarball, .vhdx, or Microsoft Store .wsl package."""
+        if path.lower().endswith(".wsl"):
+            self._run("--install", "--from-file", path, "--name", name, "--no-launch")
+        else:
+            os.makedirs(install_dir, exist_ok=True)
+            flags = ("--vhd",) if path.lower().endswith(".vhdx") else ()
+            self._run("--import", name, install_dir, path, *flags)
+
+    def install_from_url(self, name: str, install_dir: str, url: str,
+                         log: Callable[[str], None] = lambda s: None) -> None:
+        if not url.lower().startswith(("http://", "https://")):
+            raise WslError("URL must start with http:// or https://")
+        suffix = os.path.splitext(url.split("?")[0])[1] or ".tar"
+        if url.split("?")[0].lower().endswith(".tar.gz"):
+            suffix = ".tar.gz"
+        os.makedirs(install_dir, exist_ok=True)
+        dest = os.path.join(install_dir, f"download{suffix}")
+        log(f"Downloading {url}")
+        last = -1
+        with urllib.request.urlopen(url) as r, open(dest, "wb") as f:
+            total = int(r.headers.get("Content-Length") or 0)
+            got = 0
+            while chunk := r.read(1 << 20):
+                f.write(chunk)
+                got += len(chunk)
+                pct = got * 100 // total if total else got >> 20
+                if pct != last and (not total or pct % 10 == 0):
+                    log(f"  {pct}%" if total else f"  {pct} MB")
+                    last = pct
+        try:
+            self.install_from_file(name, os.path.join(install_dir, "rootfs"), dest)
+        finally:
+            os.remove(dest)

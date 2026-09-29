@@ -10,5 +10,6 @@
     "pacman": "pacman -Sy --noconfirm xfce4 xfce4-goodies xorg-server-xephyr",
     "zypper": "zypper --non-interactive install -t pattern xfce && zypper --non-interactive install xorg-x11-server-extra",
     "apk": "apk add xfce4 xfce4-terminal xorg-server-xephyr dbus-x11"
-  }
+  },
+  "check": "startxfce4"
 }

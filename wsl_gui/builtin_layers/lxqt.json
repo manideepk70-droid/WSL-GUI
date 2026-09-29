@@ -8,5 +8,6 @@
     "apt": "DEBIAN_FRONTEND=noninteractive apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y lxqt xserver-xephyr dbus-x11",
     "dnf": "dnf install -y @lxqt-desktop-environment xorg-x11-server-Xephyr",
     "pacman": "pacman -Sy --noconfirm lxqt xorg-server-xephyr"
-  }
+  },
+  "check": "startlxqt"
 }
