@@ -1,0 +1,12 @@
+{
+  "id": "kde",
+  "name": "KDE Plasma",
+  "description": "Full-featured Plasma desktop in its own window (via Xephyr on WSLg).",
+  "mode": "nested",
+  "launch": "Xephyr :10 -screen 1280x720 -resizeable -ac >/dev/null 2>&1 & sleep 1; DISPLAY=:10 dbus-run-session startplasma-x11",
+  "install": {
+    "apt": "DEBIAN_FRONTEND=noninteractive apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y kde-plasma-desktop xserver-xephyr dbus-x11",
+    "dnf": "dnf install -y @kde-desktop-environment xorg-x11-server-Xephyr",
+    "pacman": "pacman -Sy --noconfirm plasma-desktop xorg-server-xephyr"
+  }
+}

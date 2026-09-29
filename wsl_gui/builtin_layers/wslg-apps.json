@@ -1,0 +1,14 @@
+{
+  "id": "wslg-apps",
+  "name": "WSLg app integration",
+  "description": "No desktop: launch individual Linux GUI apps (Wayland/X11) as normal Windows windows.",
+  "mode": "apps",
+  "launch": "gnome-terminal || xterm || x-terminal-emulator",
+  "install": {
+    "apt": "DEBIAN_FRONTEND=noninteractive apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y x11-apps gnome-terminal nautilus mesa-utils",
+    "dnf": "dnf install -y xorg-x11-apps gnome-terminal nautilus",
+    "pacman": "pacman -Sy --noconfirm xorg-xeyes gnome-terminal nautilus",
+    "zypper": "zypper --non-interactive install xeyes gnome-terminal nautilus",
+    "apk": "apk add xeyes xterm"
+  }
+}

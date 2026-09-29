@@ -1,0 +1,12 @@
+{
+  "id": "gnome",
+  "name": "GNOME",
+  "description": "GNOME session in its own window (via Xephyr on WSLg).",
+  "mode": "nested",
+  "launch": "Xephyr :10 -screen 1280x720 -resizeable -ac >/dev/null 2>&1 & sleep 1; DISPLAY=:10 dbus-run-session gnome-session",
+  "install": {
+    "apt": "DEBIAN_FRONTEND=noninteractive apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y ubuntu-desktop-minimal xserver-xephyr dbus-x11",
+    "dnf": "dnf install -y @gnome-desktop xorg-x11-server-Xephyr",
+    "pacman": "pacman -Sy --noconfirm gnome xorg-server-xephyr"
+  }
+}
