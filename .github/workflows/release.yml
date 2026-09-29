@@ -1,0 +1,26 @@
+name: Build & Release
+on:
+  push:
+    branches: [main, "claude/**"]
+    tags: ["v*"]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r requirements.txt pyinstaller pytest
+      - run: python -m pytest -q tests
+      - run: pyinstaller --noconfirm --onefile --windowed --name WSL-GUI --add-data "wsl_gui/builtin_layers;wsl_gui/builtin_layers" run_wsl_gui.py
+      - uses: actions/upload-artifact@v4
+        with: { name: WSL-GUI-windows, path: dist/WSL-GUI.exe }
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('v0.1.{0}', github.run_number) }}
+          target_commitish: ${{ github.sha }}
+          files: dist/WSL-GUI.exe
+          generate_release_notes: true

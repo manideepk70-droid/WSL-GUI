@@ -1,0 +1,14 @@
+{
+  "id": "weston",
+  "name": "Weston (Wayland)",
+  "description": "Nested Wayland compositor window on WSLg; run Wayland apps inside it.",
+  "mode": "nested",
+  "launch": "weston --socket=wsl-gui-0 & sleep 1; WAYLAND_DISPLAY=wsl-gui-0 weston-terminal",
+  "install": {
+    "apt": "DEBIAN_FRONTEND=noninteractive apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y weston",
+    "dnf": "dnf install -y weston",
+    "pacman": "pacman -Sy --noconfirm weston",
+    "zypper": "zypper --non-interactive install weston",
+    "apk": "apk add weston weston-terminal"
+  }
+}
