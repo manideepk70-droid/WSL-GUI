@@ -18,7 +18,7 @@ python -m wsl_gui          # run from source
 build.bat                  # produces dist\WSL-GUI.exe
 python -m pytest tests     # tests (no WSL needed)
 ```
-Tagged pushes (`v*`) build the `.exe` in GitHub Actions and attach it to a GitHub Release.
+Every push to main (or a `v*` tag) builds the `.exe` in GitHub Actions and attach it to a GitHub Release.
 
 ## Custom layer example
 ```json

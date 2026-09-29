@@ -1,6 +1,7 @@
 name: Build & Release
 on:
   push:
+    branches: [main, "claude/**"]
     tags: ["v*"]
   workflow_dispatch:
 permissions:
@@ -18,7 +19,8 @@ jobs:
       - uses: actions/upload-artifact@v4
         with: { name: WSL-GUI-windows, path: dist/WSL-GUI.exe }
       - uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
         with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('v0.1.{0}', github.run_number) }}
+          target_commitish: ${{ github.sha }}
           files: dist/WSL-GUI.exe
           generate_release_notes: true
